@@ -48,6 +48,8 @@ def get_args_parser():
                         help="Number of attention heads inside the transformer's attentions")
     parser.add_argument('--num_queries', default=400, type=int, # will be overridden
                         help="Number of query slots")
+    parser.add_argument('--state_dim', default=14, type=int, # will be overridden
+                        help="Number of robot control dimensions")
     parser.add_argument('--pre_norm', action='store_true')
 
     # * Segmentation

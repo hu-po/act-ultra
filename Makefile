@@ -18,6 +18,15 @@ train:
 	--num_epochs 2000  --lr 1e-5 \
 	--seed 0
 
+eval:
+	poetry run python3 imitate_episodes.py \
+	--task_name sim_pickup_scripted \
+	--ckpt_dir ../local_data/sim_pickup_checkpts \
+	--policy_class ACT --kl_weight 10 --chunk_size 100 --hidden_dim 512 --batch_size 8 --dim_feedforward 3200 \
+	--num_epochs 2000  --lr 1e-5 \
+	--seed 0 \
+	--eval
+
 record_sim_cloud:
 	export DISPLAY=:1 && $(MAKE) record_sim
 
@@ -26,3 +35,6 @@ visualize_sim_cloud:
 
 train_cloud:
 	export DISPLAY=:1 && $(MAKE) train
+
+eval_cloud:
+	export DISPLAY=:1 && $(MAKE) eval 

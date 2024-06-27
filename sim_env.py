@@ -47,6 +47,12 @@ def make_sim_env(task_name):
         task = InsertionTask(random=False)
         env = control.Environment(physics, task, time_limit=20, control_timestep=DT,
                                   n_sub_steps=None, flat_observation=False)
+    elif 'sim_pickup' in task_name:
+        xml_path = os.path.join(XML_DIR, f'viperx_pickup_cube.xml')
+        physics = mujoco.Physics.from_xml_path(xml_path)
+        task = PickupTask(random=False)
+        env = control.Environment(physics, task, time_limit=20, control_timestep=DT,
+                                  n_sub_steps=None, flat_observation=False)
     else:
         raise NotImplementedError
     return env
@@ -229,50 +235,100 @@ class InsertionTask(BimanualViperXTask):
         return reward
 
 
-def get_action(master_bot_left, master_bot_right):
-    action = np.zeros(14)
-    # arm action
-    action[:6] = master_bot_left.dxl.joint_states.position[:6]
-    action[7:7+6] = master_bot_right.dxl.joint_states.position[:6]
-    # gripper action
-    left_gripper_pos = master_bot_left.dxl.joint_states.position[7]
-    right_gripper_pos = master_bot_right.dxl.joint_states.position[7]
-    normalized_left_pos = MASTER_GRIPPER_POSITION_NORMALIZE_FN(left_gripper_pos)
-    normalized_right_pos = MASTER_GRIPPER_POSITION_NORMALIZE_FN(right_gripper_pos)
-    action[6] = normalized_left_pos
-    action[7+6] = normalized_right_pos
-    return action
+class ViperXTask(base.Task):
+    def __init__(self, random=None):
+        super().__init__(random=random)
 
-def test_sim_teleop():
-    """ Testing teleoperation in sim with ALOHA. Requires hardware and ALOHA repo to work. """
-    from interbotix_xs_modules.arm import InterbotixManipulatorXS
+    def before_step(self, action, physics):
+        arm_action = action[:6]
+        normalized_gripper_action = action[6]
 
-    BOX_POSE[0] = [0.2, 0.5, 0.05, 1, 0, 0, 0]
+        gripper_action = PUPPET_GRIPPER_POSITION_UNNORMALIZE_FN(normalized_gripper_action)
+        full_gripper_action = [gripper_action, -gripper_action]
 
-    # source of data
-    master_bot_left = InterbotixManipulatorXS(robot_model="wx250s", group_name="arm", gripper_name="gripper",
-                                              robot_name=f'master_left', init_node=True)
-    master_bot_right = InterbotixManipulatorXS(robot_model="wx250s", group_name="arm", gripper_name="gripper",
-                                              robot_name=f'master_right', init_node=False)
+        env_action = np.concatenate([arm_action, full_gripper_action])
+        super().before_step(env_action, physics)
+        return
 
-    # setup the environment
-    env = make_sim_env('sim_transfer_cube')
-    ts = env.reset()
-    episode = [ts]
-    # setup plotting
-    ax = plt.subplot()
-    plt_img = ax.imshow(ts.observation['images']['angle'])
-    plt.ion()
+    def initialize_episode(self, physics):
+        """Sets the state of the environment at the start of each episode."""
+        super().initialize_episode(physics)
 
-    for t in range(1000):
-        action = get_action(master_bot_left, master_bot_right)
-        ts = env.step(action)
-        episode.append(ts)
+    @staticmethod
+    def get_qpos(physics):
+        qpos_raw = physics.data.qpos.copy()
+        arm_qpos = qpos_raw[:6]
+        gripper_qpos = [PUPPET_GRIPPER_POSITION_NORMALIZE_FN(qpos_raw[6])]
+        return np.concatenate([arm_qpos, gripper_qpos])
 
-        plt_img.set_data(ts.observation['images']['angle'])
-        plt.pause(0.02)
+    @staticmethod
+    def get_qvel(physics):
+        qvel_raw = physics.data.qvel.copy()
+        arm_qvel = qvel_raw[:6]
+        gripper_qvel = [PUPPET_GRIPPER_VELOCITY_NORMALIZE_FN(qvel_raw[6])]
+        return np.concatenate([arm_qvel, gripper_qvel])
+
+    @staticmethod
+    def get_env_state(physics):
+        raise NotImplementedError
+
+    def get_observation(self, physics):
+        obs = collections.OrderedDict()
+        obs['qpos'] = self.get_qpos(physics)
+        obs['qvel'] = self.get_qvel(physics)
+        obs['env_state'] = self.get_env_state(physics)
+        obs['images'] = dict()
+        obs['images']['top'] = physics.render(height=480, width=640, camera_id='top')
+        obs['images']['angle'] = physics.render(height=480, width=640, camera_id='angle')
+        obs['images']['vis'] = physics.render(height=480, width=640, camera_id='front_close')
+
+        return obs
+
+    def get_reward(self, physics):
+        # return whether left gripper is holding the box
+        raise NotImplementedError
 
 
-if __name__ == '__main__':
-    test_sim_teleop()
+class PickupTask(ViperXTask):
+    def __init__(self, random=None):
+        super().__init__(random=random)
+        self.max_reward = 2
+
+    def initialize_episode(self, physics):
+        """Sets the state of the environment at the start of each episode."""
+        # TODO Notice: this function does not randomize the env configuration. Instead, set BOX_POSE from outside
+        # reset qpos, control and box position
+        with physics.reset_context():
+            physics.named.data.qpos[:8] = START_ARM_POSE[8:]
+            np.copyto(physics.data.ctrl, START_ARM_POSE[8:])
+            assert BOX_POSE[0] is not None
+            physics.named.data.qpos[-7:] = BOX_POSE[0]
+        super().initialize_episode(physics)
+
+    @staticmethod
+    def get_env_state(physics):
+        env_state = physics.data.qpos.copy()[8:]
+        return env_state
+
+    def get_reward(self, physics):
+        # return whether left gripper is holding the box
+        all_contact_pairs = []
+        for i_contact in range(physics.data.ncon):
+            id_geom_1 = physics.data.contact[i_contact].geom1
+            id_geom_2 = physics.data.contact[i_contact].geom2
+            name_geom_1 = physics.model.id2name(id_geom_1, 'geom')
+            name_geom_2 = physics.model.id2name(id_geom_2, 'geom')
+            contact_pair = (name_geom_1, name_geom_2)
+            all_contact_pairs.append(contact_pair)
+
+        touch_right_gripper = ("red_box", "vx300s_right/10_right_gripper_finger") in all_contact_pairs
+        touch_table = ("red_box", "table") in all_contact_pairs
+
+        reward = 0
+        if touch_right_gripper:
+            reward = 1
+        if touch_right_gripper and not touch_table: # lifted
+            reward = 2
+        return reward
+
 

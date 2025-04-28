@@ -119,6 +119,16 @@ def main(args):
     with open(stats_path, 'wb') as f:
         pickle.dump(stats, f)
 
+    # Save dataset stats as wandb artifact
+    if not is_eval:
+        stats_artifact = wandb.Artifact(
+            name='dataset_stats',
+            type='dataset',
+            description='Dataset statistics for normalization'
+        )
+        stats_artifact.add_file(stats_path)
+        wandb.log_artifact(stats_artifact)
+
     best_ckpt_info = train_bc(train_dataloader, val_dataloader, config)
     best_epoch, min_val_loss, best_state_dict = best_ckpt_info
 
@@ -214,7 +224,7 @@ def eval_bc(config, ckpt_name, save_episode=True):
 
     max_timesteps = int(max_timesteps * 1) # may increase for real-world tasks
 
-    num_rollouts = 50
+    num_rollouts = 8
     episode_returns = []
     highest_rewards = []
     for rollout_id in range(num_rollouts):

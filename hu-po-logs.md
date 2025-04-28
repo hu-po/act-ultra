@@ -101,6 +101,7 @@ poetry run python3 imitate_episodes.py \
 --lr 1e-5 \
 --seed 0 \
 --eval
+ffplay video0.mp4
 ```
 
 run a sweep for imitation learning

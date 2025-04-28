@@ -8,6 +8,7 @@ from copy import deepcopy
 from tqdm import tqdm
 from einops import rearrange
 import wandb
+import datetime
 
 from constants import DT
 from constants import PUPPET_GRIPPER_JOINT_OPEN 
@@ -93,7 +94,8 @@ def main(args):
         'seed': args['seed'],
         'temporal_agg': args['temporal_agg'],
         'camera_names': camera_names,
-        'real_robot': not is_sim
+        'real_robot': not is_sim,
+        'eval': is_eval
     }
 
     if is_eval:
@@ -485,4 +487,17 @@ if __name__ == '__main__':
     parser.add_argument('--dim_feedforward', action='store', type=int, help='dim_feedforward', required=False)
     parser.add_argument('--temporal_agg', action='store_true')
     
-    main(vars(parser.parse_args()))
+    args = vars(parser.parse_args())
+
+    # Add unique subdirectory for each run
+    if not args['eval']:
+        import wandb
+        # Use wandb.run.id or wandb.run.name for uniqueness
+        run_id = wandb.util.generate_id() if not wandb.run else wandb.run.id
+        # Or use timestamp for local runs
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        unique_dir = f"run_{run_id}_{timestamp}"
+        args['ckpt_dir'] = os.path.join(args['ckpt_dir'], unique_dir)
+        print(f"Saving outputs to {args['ckpt_dir']}")
+
+    main(args)

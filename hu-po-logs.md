@@ -81,3 +81,10 @@ poetry run python3 imitate_episodes.py \
 --lr 1e-5 \
 --seed 0
 ```
+
+run a sweep for imitation learning
+
+```bash
+poetry run wandb sweep sweep.yaml
+```
+

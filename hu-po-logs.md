@@ -108,16 +108,7 @@ run a sweep for imitation learning
 
 ```bash
 poetry run wandb sweep sweep-act.yaml
-```
-
-use scripted policy to generate 10X dataset
-
-```bash
-mkdir -p /home/ubuntu/sim_insertion_scripted_500
-poetry run python3 record_sim_episodes.py \
---task_name sim_insertion_scripted \
---dataset_dir /home/ubuntu/sim_insertion_scripted_500 \
---num_episodes 500
+poetry run wandb agent hug/act-ultra/j535a1yj
 ```
 
 test out diffusion policy locally
@@ -174,4 +165,14 @@ poetry run python3 imitate_episodes.py \
 --seed 0 \
 --eval
 ffplay video0.mp4
+```
+
+use scripted policy to generate larger dataset
+
+```bash
+mkdir -p /home/ubuntu/sim_insertion_scripted_200
+poetry run python3 record_sim_episodes.py \
+--task_name sim_insertion_scripted \
+--dataset_dir /home/ubuntu/sim_insertion_scripted_200 \
+--num_episodes 200
 ```

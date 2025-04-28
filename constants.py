@@ -25,9 +25,9 @@ SIM_TASK_CONFIGS = {
         # cloud H100 - 50 episodes
         'dataset_dir': DATA_DIR + '/sim_insertion_scripted_50',
         'num_episodes': 50,
-        # # cloud H100 - 500 episodes
-        # 'dataset_dir': DATA_DIR + '/sim_insertion_scripted_500',
-        # 'num_episodes': 500,
+        # # cloud H100 - 200 episodes
+        # 'dataset_dir': DATA_DIR + '/sim_insertion_scripted_200',
+        # 'num_episodes': 200,
         'episode_len': 400,
         'camera_names': ['top']
     },

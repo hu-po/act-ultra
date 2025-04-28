@@ -107,7 +107,7 @@ ffplay video0.mp4
 run a sweep for imitation learning
 
 ```bash
-poetry run wandb sweep sweep-act-50.yaml
+poetry run wandb sweep sweep-act.yaml
 ```
 
 use scripted policy to generate 10X dataset
@@ -155,4 +155,23 @@ poetry run python3 imitate_episodes.py \
 --lr 1e-5 \
 --chunk_size 100 \
 --seed 0
+```
+
+evaluate diffusion policy locally
+
+```bash
+poetry run python3 imitate_episodes.py \
+--task_name sim_insertion_scripted \
+--ckpt_dir /home/${USER}/act-ultra \
+--policy_class Diffusion \
+--batch_size 8 \
+--num_epochs 2000 \
+--lr 1e-5 \
+--chunk_size 100 \
+--hidden_dim 512 \
+--dim_feedforward 3200 \
+--temporal_agg \
+--seed 0 \
+--eval
+ffplay video0.mp4
 ```

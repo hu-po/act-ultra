@@ -8,6 +8,8 @@ data
 data_local
 .vscode
 _wandb
+*.pkl
+*.ckpt
 
 **/.DS_Store
 

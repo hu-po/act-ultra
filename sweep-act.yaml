@@ -7,9 +7,9 @@ parameters:
   seed:
     values: [0, 1, 2]
   batch_size:
-    value: 32
+    value: 16
   num_epochs:
-    value: 1024
+    value: 2000
   ckpt_dir:
     value: /home/ubuntu/sim_insertion_checkpts
   task_name:

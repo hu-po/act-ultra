@@ -80,6 +80,7 @@ def main(args):
                          'camera_names': camera_names,}
     elif policy_class == 'Diffusion':
         policy_config = {'lr': args['lr'],
+                         'num_queries': args['chunk_size'],
                          'chunk_size': args['chunk_size'],
                          'camera_names': camera_names,
                          'state_dim': state_dim,
@@ -105,6 +106,15 @@ def main(args):
     }
 
     if is_eval:
+        # Load dataset stats for evaluation
+        stats_path = os.path.join(ckpt_dir, 'dataset_stats.pkl')
+        with open(stats_path, 'rb') as f:
+            stats = pickle.load(f)
+        if policy_class == 'Diffusion':
+            action_dim = len(stats['action_mean'])
+            policy_config['action_dim'] = action_dim
+            config['policy_config'] = policy_config
+
         ckpt_names = [f'policy_best.ckpt']
         results = []
         for ckpt_name in ckpt_names:
@@ -149,8 +159,9 @@ def main(args):
     print(f'Best ckpt, val loss {min_val_loss:.6f} @ epoch{best_epoch}')
     
     if not is_eval:
+        run_id = wandb.run.id
         artifact = wandb.Artifact(
-            name=f'policy_best_e{best_epoch}',
+            name=f'policy_best_e{best_epoch}_{run_id}',
             type='model',
             description=f'policy checkpoint at epoch {best_epoch} with val loss {min_val_loss:.6f}'
         )
@@ -462,8 +473,9 @@ def train_bc(train_dataloader, val_dataloader, config):
 
     # Save best checkpoint as wandb artifact
     if not config['eval']:
+        run_id = wandb.run.id
         artifact = wandb.Artifact(
-            name=f'policy_best_e{best_epoch}',
+            name=f'policy_best_e{best_epoch}_{run_id}',
             type='model',
             description=f'policy checkpoint at epoch {best_epoch} with val loss {min_val_loss:.6f}'
         )

@@ -1,0 +1,32 @@
+program: imitate_episodes.py
+method: random
+metric:
+  name: val/loss
+  goal: minimize
+parameters:
+  batch_size:
+    value: 8
+  num_epochs:
+    value: 2000
+  ckpt_dir:
+    value: /home/ubuntu/sim_insertion_checkpts
+  task_name:
+    value: sim_insertion_scripted
+  policy_class:
+    value: Diffusion
+  seed:
+    values: [0, 1, 2]
+  chunk_size:
+    values: [50, 100, 200]
+  hidden_dim:
+    values: [256, 512, 1024]
+  lr:
+    values: [1e-3, 1e-4, 1e-5]
+  num_train_timesteps:
+    values: [50, 100, 200]
+  unet_down_dims:
+    values: [[256, 512, 1024], [512, 1024, 2048]]
+  unet_kernel_size:
+    values: [3, 5, 7]
+  unet_n_groups:
+    values: [4, 8, 16]

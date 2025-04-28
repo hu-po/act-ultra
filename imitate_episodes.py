@@ -124,6 +124,15 @@ def main(args):
     ckpt_path = os.path.join(ckpt_dir, f'policy_best.ckpt')
     torch.save(best_state_dict, ckpt_path)
     print(f'Best ckpt, val loss {min_val_loss:.6f} @ epoch{best_epoch}')
+    
+    if not is_eval:
+        artifact = wandb.Artifact(
+            name=f'policy_best_e{best_epoch}',
+            type='model',
+            description=f'policy checkpoint at epoch {best_epoch} with val loss {min_val_loss:.6f}'
+        )
+        artifact.add_file(ckpt_path)
+        wandb.log_artifact(artifact)
 
 
 def make_policy(policy_class, policy_config):
@@ -423,6 +432,16 @@ def train_bc(train_dataloader, val_dataloader, config):
     ckpt_path = os.path.join(ckpt_dir, f'policy_epoch_{best_epoch}_seed_{seed}.ckpt')
     torch.save(best_state_dict, ckpt_path)
     print(f'Training finished:\nSeed {seed}, val loss {min_val_loss:.6f} at epoch {best_epoch}')
+
+    # Save best checkpoint as wandb artifact
+    if not config['eval']:
+        artifact = wandb.Artifact(
+            name=f'policy_best_e{best_epoch}',
+            type='model',
+            description=f'policy checkpoint at epoch {best_epoch} with val loss {min_val_loss:.6f}'
+        )
+        artifact.add_file(ckpt_path)
+        wandb.log_artifact(artifact)
 
     # save training curves
     plot_history(train_history, validation_history, num_epochs, ckpt_dir, seed)

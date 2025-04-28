@@ -40,15 +40,43 @@ curl -sSL https://install.python-poetry.org | python3 -
 export PATH="/home/ubuntu/.local/bin:$PATH"
 poetry lock
 poetry install
+poetry run pip install torch
 poetry run wandb login
 ```
 
 use scripted policy to generate dataset
 
 ```bash
-mkdir -p /local_data/sim_insertion_scripted
-MUJOCO_GL=egl NUM_EPISODES=50 poetry run python3 record_sim_episodes.py \
+mkdir -p /home/ubuntu/sim_insertion_scripted
+MUJOCO_GL=egl poetry run python3 record_sim_episodes.py \
 --task_name sim_insertion_scripted \
---dataset_dir /local_data/sim_insertion_scripted \
---num_episodes ${NUM_EPISODES}
+--dataset_dir /home/ubuntu/sim_insertion_scripted \
+--num_episodes 50
+```
+
+fix mujoco gl error
+
+```bash
+sudo apt-get update
+sudo apt-get install -y xvfb libgl1-mesa-glx libegl1-mesa-dri
+Xvfb :1 -screen 0 1280x1024x24
+export DISPLAY=:1
+```
+
+train imitation learning model
+
+```bash
+mkdir -p /home/ubuntu/sim_insertion_checkpts
+poetry run python3 imitate_episodes.py \
+--task_name sim_insertion_scripted \
+--ckpt_dir /home/ubuntu/sim_insertion_checkpts \
+--policy_class ACT \
+--kl_weight 10 \
+--chunk_size 100 \
+--hidden_dim 512 \
+--batch_size 8 \
+--dim_feedforward 3200 \
+--num_epochs 2000 \
+--lr 1e-5 \
+--seed 0
 ```

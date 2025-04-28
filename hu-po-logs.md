@@ -119,3 +119,40 @@ poetry run python3 record_sim_episodes.py \
 --dataset_dir /home/ubuntu/sim_insertion_scripted_500 \
 --num_episodes 500
 ```
+
+test out diffusion policy locally
+
+```bash
+mkdir -p ~/act-ultra/synthetic_data
+poetry run python3 record_sim_episodes.py \
+--task_name sim_insertion_scripted \
+--dataset_dir ~/act-ultra/synthetic_data \
+--num_episodes 10
+poetry run pip install diffusers
+mkdir -p ~/act-ultra/ckpts
+poetry run python3 imitate_episodes.py \
+--task_name sim_insertion_scripted \
+--ckpt_dir ~/act-ultra/ckpts \
+--policy_class Diffusion \
+--batch_size 8 \
+--num_epochs 100 \
+--lr 1e-5 \
+--chunk_size 100 \
+--seed 0
+```
+
+run diffusion policy on cloud machine
+
+```bash
+poetry run pip install diffusers
+mkdir -p /home/ubuntu/sim_insertion_diffusion
+poetry run python3 imitate_episodes.py \
+--task_name sim_insertion_scripted \
+--ckpt_dir /home/ubuntu/sim_insertion_diffusion \
+--policy_class Diffusion \
+--batch_size 8 \
+--num_epochs 2000 \
+--lr 1e-5 \
+--chunk_size 100 \
+--seed 0
+```

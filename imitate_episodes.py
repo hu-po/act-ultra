@@ -15,7 +15,7 @@ from constants import PUPPET_GRIPPER_JOINT_OPEN
 from utils import load_data # data functions
 from utils import sample_box_pose, sample_insertion_pose # robot functions
 from utils import compute_dict_mean, set_seed, detach_dict # helper functions
-from policy import ACTPolicy, CNNMLPPolicy
+from policy import ACTPolicy, CNNMLPPolicy, DiffusionPolicy
 from visualize_episodes import save_videos
 
 from sim_env import BOX_POSE
@@ -78,6 +78,12 @@ def main(args):
     elif policy_class == 'CNNMLP':
         policy_config = {'lr': args['lr'], 'lr_backbone': lr_backbone, 'backbone' : backbone, 'num_queries': 1,
                          'camera_names': camera_names,}
+    elif policy_class == 'Diffusion':
+        policy_config = {'lr': args['lr'],
+                         'chunk_size': args['chunk_size'],
+                         'camera_names': camera_names,
+                         'state_dim': state_dim,
+                         'action_dim': None}
     else:
         raise NotImplementedError
 
@@ -111,6 +117,11 @@ def main(args):
         exit()
 
     train_dataloader, val_dataloader, stats, _ = load_data(dataset_dir, num_episodes, camera_names, batch_size_train, batch_size_val)
+
+    if policy_class == 'Diffusion':
+        action_dim = len(stats['action_mean'])
+        policy_config['action_dim'] = action_dim
+        config['policy_config'] = policy_config
 
     # save dataset stats
     if not os.path.isdir(ckpt_dir):
@@ -152,6 +163,8 @@ def make_policy(policy_class, policy_config):
         policy = ACTPolicy(policy_config)
     elif policy_class == 'CNNMLP':
         policy = CNNMLPPolicy(policy_config)
+    elif policy_class == 'Diffusion':
+        policy = DiffusionPolicy(policy_config)
     else:
         raise NotImplementedError
     return policy
@@ -161,6 +174,8 @@ def make_optimizer(policy_class, policy):
     if policy_class == 'ACT':
         optimizer = policy.configure_optimizers()
     elif policy_class == 'CNNMLP':
+        optimizer = policy.configure_optimizers()
+    elif policy_class == 'Diffusion':
         optimizer = policy.configure_optimizers()
     else:
         raise NotImplementedError
@@ -275,7 +290,7 @@ def eval_bc(config, ckpt_name, save_episode=True):
                 curr_image = get_image(ts, camera_names)
 
                 ### query policy
-                if config['policy_class'] == "ACT":
+                if config['policy_class'] in ["ACT", "Diffusion"]:
                     if t % query_frequency == 0:
                         all_actions = policy(qpos, curr_image)
                     if temporal_agg:

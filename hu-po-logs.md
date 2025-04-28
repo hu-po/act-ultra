@@ -40,7 +40,8 @@ curl -sSL https://install.python-poetry.org | python3 -
 export PATH="/home/ubuntu/.local/bin:$PATH"
 poetry lock
 poetry install
-poetry run pip install torch
+poetry run pip install torch --index-url https://download.pytorch.org/whl/cu121
+poetry run python3 -c "import torch; print(torch.cuda.is_available())"
 poetry run wandb login
 ```
 

@@ -38,7 +38,7 @@ def main(args):
 
     # Initialize wandb
     if not is_eval:
-        wandb.init(entity="hu-po", project="act-ultra", config=args)
+        wandb.init(entity="hug", project="act-ultra", config=args)
 
     # get task parameters
     is_sim = task_name[:4] == 'sim_'

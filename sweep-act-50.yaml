@@ -1,8 +1,8 @@
 program: imitate_episodes.py
 method: random
 metric:
-  name: eval_success_rate
-  goal: maximize
+  name: val/loss
+  goal: minimize
 parameters:
   seed:
     values: [0, 1, 2]

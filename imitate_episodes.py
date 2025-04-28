@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 from tqdm import tqdm
 from einops import rearrange
+import wandb
 
 from constants import DT
 from constants import PUPPET_GRIPPER_JOINT_OPEN 
@@ -34,6 +35,10 @@ def main(args):
     batch_size_train = args['batch_size']
     batch_size_val = args['batch_size']
     num_epochs = args['num_epochs']
+
+    # Initialize wandb
+    if not is_eval:
+        wandb.init(entity="hu-po", project="act-ultra", config=args)
 
     # get task parameters
     is_sim = task_name[:4] == 'sim_'
@@ -315,6 +320,13 @@ def eval_bc(config, ckpt_name, save_episode=True):
         f.write('\n\n')
         f.write(repr(highest_rewards))
 
+    # Log evaluation metrics
+    wandb.log({
+        "eval/success_rate": success_rate,
+        "eval/avg_return": avg_return,
+        "eval/rollouts": num_rollouts
+    })
+
     return success_rate, avg_return
 
 
@@ -357,11 +369,18 @@ def train_bc(train_dataloader, val_dataloader, config):
             if epoch_val_loss < min_val_loss:
                 min_val_loss = epoch_val_loss
                 best_ckpt_info = (epoch, min_val_loss, deepcopy(policy.state_dict()))
-        print(f'Val loss:   {epoch_val_loss:.5f}')
-        summary_string = ''
-        for k, v in epoch_summary.items():
-            summary_string += f'{k}: {v.item():.3f} '
-        print(summary_string)
+            print(f'Val loss:   {epoch_val_loss:.5f}')
+            summary_string = ''
+            for k, v in epoch_summary.items():
+                summary_string += f'{k}: {v.item():.3f} '
+            print(summary_string)
+
+            # Log validation metrics
+            wandb.log({
+                "val/loss": epoch_val_loss,
+                "val/action_mse": epoch_summary.get('action_mse', 0),
+                "epoch": epoch
+            })
 
         # training
         policy.train()
@@ -374,6 +393,16 @@ def train_bc(train_dataloader, val_dataloader, config):
             optimizer.step()
             optimizer.zero_grad()
             train_history.append(detach_dict(forward_dict))
+
+            # Log training metrics every 100 batches
+            if batch_idx % 100 == 0:
+                wandb.log({
+                    "train/loss": loss.item(),
+                    "train/action_mse": forward_dict.get('action_mse', 0),
+                    "epoch": epoch,
+                    "batch": batch_idx
+                })
+
         epoch_summary = compute_dict_mean(train_history[(batch_idx+1)*epoch:(batch_idx+1)*(epoch+1)])
         epoch_train_loss = epoch_summary['loss']
         print(f'Train loss: {epoch_train_loss:.5f}')

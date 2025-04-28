@@ -87,10 +87,20 @@ scp checkpoint from cloud machine to run evaluate
 ```bash
 cd ~/act-ultra
 scp -i ~/.ssh/id_ed25519.pub ubuntu@192.222.52.183:/home/ubuntu/sim_insertion_checkpts/policy_last.ckpt policy_best.ckpt
-poetry run python3 evaluate_policy.py \
+scp -i ~/.ssh/id_ed25519.pub ubuntu@192.222.52.183:/home/ubuntu/sim_insertion_checkpts/dataset_stats.pkl dataset_stats.pkl
+poetry run python3 imitate_episodes.py \
 --task_name sim_insertion_scripted \
---ckpt_dir /home/${USER}/sim_insertion_checkpts \
---policy_class ACT
+--ckpt_dir /home/${USER}/act-ultra \
+--policy_class ACT \
+--chunk_size 100 \
+--hidden_dim 512 \
+--dim_feedforward 3200 \
+--temporal_agg \
+--batch_size 8 \
+--num_epochs 2000 \
+--lr 1e-5 \
+--seed 0 \
+--eval
 ```
 
 run a sweep for imitation learning

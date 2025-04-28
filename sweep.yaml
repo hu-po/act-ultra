@@ -1,0 +1,28 @@
+program: imitate_episodes.py
+method: random
+metric:
+  name: eval_success_rate
+  goal: maximize
+parameters:
+  seed:
+    values: [0, 1, 2]
+  ckpt_dir:
+    value: /local_data/sim_insertion_checkpts 
+  task_name:
+    value: sim_insertion_scripted
+  policy_class:
+    value: ACT
+  kl_weight:
+    values: [5, 10, 20]
+  chunk_size:
+    values: [50, 100, 200]
+  hidden_dim:
+    values: [256, 512, 1024]
+  batch_size:
+    value: 50
+  dim_feedforward:
+    values: [1600, 3200, 4800, 6400]
+  num_epochs:
+    value: 2000
+  lr:
+    values: [1e-3, 1e-4, 1e-5]

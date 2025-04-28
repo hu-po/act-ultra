@@ -37,22 +37,12 @@ ssh -i ~/.ssh/id_ed25519.pub ubuntu@192.222.52.183
 git clone https://github.com/hu-po/act-ultra.git
 cd act-ultra
 curl -sSL https://install.python-poetry.org | python3 -
-export PATH="/home/ubuntu/.local/bin:$PATH"
+export PATH="/home/${USER}/.local/bin:$PATH"
 poetry lock
 poetry install
 poetry run pip install torch --index-url https://download.pytorch.org/whl/cu121
 poetry run python3 -c "import torch; print(torch.cuda.is_available())"
 poetry run wandb login
-```
-
-use scripted policy to generate dataset
-
-```bash
-mkdir -p /home/ubuntu/sim_insertion_scripted
-MUJOCO_GL=egl poetry run python3 record_sim_episodes.py \
---task_name sim_insertion_scripted \
---dataset_dir /home/ubuntu/sim_insertion_scripted \
---num_episodes 50
 ```
 
 fix mujoco gl error
@@ -62,6 +52,16 @@ sudo apt-get update
 sudo apt-get install -y xvfb libgl1-mesa-glx libegl1-mesa-dri
 Xvfb :1 -screen 0 1280x1024x24
 export DISPLAY=:1
+```
+
+use scripted policy to generate dataset
+
+```bash
+mkdir -p /home/ubuntu/sim_insertion_scripted
+poetry run python3 record_sim_episodes.py \
+--task_name sim_insertion_scripted \
+--dataset_dir /home/ubuntu/sim_insertion_scripted \
+--num_episodes 50
 ```
 
 train imitation learning model
@@ -82,9 +82,29 @@ poetry run python3 imitate_episodes.py \
 --seed 0
 ```
 
+scp checkpoint from cloud machine to run evaluate
+
+```bash
+cd ~/act-ultra
+scp -i ~/.ssh/id_ed25519.pub ubuntu@192.222.52.183:/home/ubuntu/sim_insertion_checkpts/policy_last.ckpt policy_best.ckpt
+poetry run python3 evaluate_policy.py \
+--task_name sim_insertion_scripted \
+--ckpt_dir /home/${USER}/sim_insertion_checkpts \
+--policy_class ACT
+```
+
 run a sweep for imitation learning
 
 ```bash
-poetry run wandb sweep sweep.yaml
+poetry run wandb sweep sweep-act-50.yaml
 ```
 
+use scripted policy to generate 10X dataset
+
+```bash
+mkdir -p /home/ubuntu/sim_insertion_scripted_500
+poetry run python3 record_sim_episodes.py \
+--task_name sim_insertion_scripted \
+--dataset_dir /home/ubuntu/sim_insertion_scripted_500 \
+--num_episodes 500
+```

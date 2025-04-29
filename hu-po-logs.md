@@ -242,16 +242,11 @@ poetry lock
 poetry install
 poetry run pip install torch --index-url https://download.pytorch.org/whl/cu121
 poetry run python3 -c "import torch; print(torch.cuda.is_available())"
+poetry run pip install diffusers
 poetry run wandb login
-```
-
-fix mujoco gl error
-
-```bash
 sudo apt-get update
-sudo apt-get install -y xvfb libgl1-mesa-glx libegl1-mesa-dri
-Xvfb :1 -screen 0 1280x1024x24
-export DISPLAY=:1
+sudo apt-get install -y xvfb libgl1-mesa-glx libosmesa6 libglfw3
+Xvfb :1 -screen 0 1280x1024x24 & export DISPLAY=:1
 ```
 
 use scripted policy to generate dataset
@@ -264,3 +259,8 @@ poetry run python3 record_sim_episodes.py \
 --num_episodes 200
 ```
 
+run diffusion policy sweep
+
+```bash
+./sweep-multi.sh
+```

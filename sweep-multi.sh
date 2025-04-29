@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create the sweep
-SWEEP_ID=$(wandb sweep sweep-diff.yaml | grep -o "wandb: Created sweep with ID: .*" | cut -d' ' -f6)
+SWEEP_ID=$(poetry run wandb sweep sweep-diff.yaml | grep -o "wandb: Created sweep with ID: .*" | cut -d' ' -f6)
 
 # Function to run a sweep agent on a specific GPU
 run_agent() {

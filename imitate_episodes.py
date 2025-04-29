@@ -84,7 +84,8 @@ def main(args):
                          'chunk_size': args['chunk_size'],
                          'camera_names': camera_names,
                          'state_dim': state_dim,
-                         'action_dim': None}
+                         'action_dim': None,
+                         'num_train_timesteps': args['num_train_timesteps']}
     else:
         raise NotImplementedError
 
@@ -400,13 +401,12 @@ def train_bc(train_dataloader, val_dataloader, config):
     validation_history = []
     min_val_loss = np.inf
     best_ckpt_info = None
-    for epoch in tqdm(range(num_epochs)):
-        print(f'\nEpoch {epoch}')
+    for epoch in tqdm(range(num_epochs), desc="Epochs"):
         # validation
         with torch.inference_mode():
             policy.eval()
             epoch_dicts = []
-            for batch_idx, data in enumerate(val_dataloader):
+            for batch_idx, data in enumerate(tqdm(val_dataloader, desc="Validation", leave=False)):
                 forward_dict = forward_pass(data, policy)
                 epoch_dicts.append(forward_dict)
             epoch_summary = compute_dict_mean(epoch_dicts)
@@ -416,12 +416,7 @@ def train_bc(train_dataloader, val_dataloader, config):
             if epoch_val_loss < min_val_loss:
                 min_val_loss = epoch_val_loss
                 best_ckpt_info = (epoch, min_val_loss, deepcopy(policy.state_dict()))
-            print(f'Val loss:   {epoch_val_loss:.5f}')
-            summary_string = ''
-            for k, v in epoch_summary.items():
-                summary_string += f'{k}: {v.item():.3f} '
-            print(summary_string)
-
+            
             # Log validation metrics
             wandb.log({
                 "val/loss": epoch_val_loss,
@@ -432,7 +427,7 @@ def train_bc(train_dataloader, val_dataloader, config):
         # training
         policy.train()
         optimizer.zero_grad()
-        for batch_idx, data in enumerate(train_dataloader):
+        for batch_idx, data in enumerate(tqdm(train_dataloader, desc="Training", leave=False)):
             forward_dict = forward_pass(data, policy)
             # backward
             loss = forward_dict['loss']
@@ -452,11 +447,13 @@ def train_bc(train_dataloader, val_dataloader, config):
 
         epoch_summary = compute_dict_mean(train_history[(batch_idx+1)*epoch:(batch_idx+1)*(epoch+1)])
         epoch_train_loss = epoch_summary['loss']
-        print(f'Train loss: {epoch_train_loss:.5f}')
-        summary_string = ''
-        for k, v in epoch_summary.items():
-            summary_string += f'{k}: {v.item():.3f} '
-        print(summary_string)
+        
+        # Log epoch summary to wandb
+        wandb.log({
+            "epoch/train_loss": epoch_train_loss,
+            "epoch/val_loss": epoch_val_loss,
+            "epoch": epoch
+        })
 
         if epoch % 100 == 0:
             ckpt_path = os.path.join(ckpt_dir, f'policy_epoch_{epoch}_seed_{seed}.ckpt')
@@ -523,6 +520,7 @@ if __name__ == '__main__':
     parser.add_argument('--hidden_dim', action='store', type=int, help='hidden_dim', required=False)
     parser.add_argument('--dim_feedforward', action='store', type=int, help='dim_feedforward', required=False)
     parser.add_argument('--temporal_agg', action='store_true')
+    parser.add_argument('--num_train_timesteps', action='store', type=int, help='number of diffusion timesteps', required=False, default=64)
     
     args = vars(parser.parse_args())
 

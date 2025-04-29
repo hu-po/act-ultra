@@ -4,8 +4,6 @@ metric:
   name: val/loss
   goal: minimize
 parameters:
-  seed:
-    values: [0, 1, 2]
   batch_size:
     value: 16
   num_epochs:
@@ -16,6 +14,8 @@ parameters:
     value: sim_insertion_scripted
   policy_class:
     value: ACT
+  seed:
+    values: [0, 1, 2]
   kl_weight:
     values: [5, 10, 20]
   chunk_size:

@@ -167,6 +167,8 @@ poetry run python3 imitate_episodes.py \
 ffplay video0.mp4
 ```
 
+tried with and without temporal agg, success rate is zero. something is wrong with the policy...
+
 use scripted policy to generate larger dataset
 
 ```bash

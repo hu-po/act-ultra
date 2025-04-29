@@ -193,16 +193,17 @@ class DiffusionPolicy(nn.Module):
     def __init__(self, policy_config):
         super().__init__()
         self.policy_config = policy_config
-        self.chunk_size = policy_config['chunk_size']
+        self.chunk_size = policy_config['chunk_size']  # Sequence length for actions
         self.camera_names = policy_config['camera_names']
         self.state_dim = policy_config['state_dim']
         self.action_dim = policy_config['action_dim']
 
         # Backbone for image encoding
-        backbone_model = torchvision.models.resnet18(pretrained=True)
+        backbone_model = torchvision.models.resnet18(weights='IMAGENET1K_V1')
         self.backbone = IntermediateLayerGetter(backbone_model, return_layers={'layer4': 'feature_map'})
         self.pool = nn.AdaptiveAvgPool2d((1, 1))
         self.flatten = nn.Flatten(start_dim=1)
+        self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
         # Compute global conditioning dimension
         num_cameras = len(self.camera_names)
@@ -213,12 +214,15 @@ class DiffusionPolicy(nn.Module):
         self.unet = DiffusionUnet(action_dim=self.action_dim, global_cond_dim=global_cond_dim)
 
         # Noise scheduler
-        self.scheduler = DDPMScheduler(num_train_timesteps=100)
+        self.scheduler = DDPMScheduler()
+        self.scheduler.config.num_train_timesteps = policy_config.get('num_train_timesteps', 64)  # Get from config with default
 
     def __call__(self, qpos, image, actions=None, is_pad=None):
         B = qpos.size(0)
-        # Encode observation
-        image_flat = image.view(-1, *image.shape[2:])  # (B*num_cameras, C, H, W)
+
+        # Normalize image consistently with ACTPolicy and CNNMLPPolicy
+        image = self.normalize(image)  # Shape: (B, num_cameras, C, H, W)
+        image_flat = image.view(-1, *image.shape[2:])  # (B * num_cameras, C, H, W)
         feat_map = self.backbone(image_flat)['feature_map']
         feat = self.pool(feat_map)
         feat = self.flatten(feat)
@@ -226,20 +230,34 @@ class DiffusionPolicy(nn.Module):
         global_cond = torch.cat([qpos, feat], dim=1)
 
         if actions is not None:  # Training
-            trajectory = actions[:, :self.chunk_size]  # Slice to chunk_size
-            timesteps = torch.randint(0, self.scheduler.num_train_timesteps, (B,), device=trajectory.device)
+            trajectory = actions[:, :self.chunk_size]  # Ensure shape: (B, chunk_size, action_dim)
+            if is_pad is not None:
+                is_pad = is_pad[:, :self.chunk_size]  # Shape: (B, chunk_size)
+                # Convert to boolean tensor and ensure it's on the correct device
+                is_pad_bool = is_pad.to(torch.bool).to(trajectory.device)
+            
+            timesteps = torch.randint(0, self.scheduler.config.num_train_timesteps, (B,), device=trajectory.device)
             noise = torch.randn_like(trajectory)
             noisy_trajectory = self.scheduler.add_noise(trajectory, noise, timesteps)
             pred = self.unet(noisy_trajectory, timesteps, global_cond)
-            loss = F.mse_loss(pred, noise)
+            
+            # Compute loss and mask with is_pad if provided
+            loss = F.mse_loss(pred, noise, reduction='none')
+            if is_pad is not None:
+                # Create mask by inverting is_pad_bool and converting to float
+                mask = (~is_pad_bool).unsqueeze(-1).float()
+                loss = loss * mask  # Mask padded timesteps
+                loss = loss.sum() / mask.sum().clamp(min=1)  # Normalize by non-padded elements
+            else:
+                loss = loss.mean()
             return {'loss': loss}
         else:  # Inference
             sample = torch.randn((B, self.chunk_size, self.action_dim), device=global_cond.device)
-            for t in range(self.scheduler.num_train_timesteps - 1, -1, -1):
+            for t in range(self.scheduler.config.num_train_timesteps - 1, -1, -1):
                 timesteps = torch.full((B,), t, device=global_cond.device)
                 model_output = self.unet(sample, timesteps, global_cond)
                 sample = self.scheduler.step(model_output, t, sample).prev_sample
-            return sample
+            return sample  # Shape: (B, chunk_size, action_dim)
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.policy_config['lr'])

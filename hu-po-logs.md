@@ -262,5 +262,6 @@ poetry run python3 record_sim_episodes.py \
 run diffusion policy sweep
 
 ```bash
-./sweep-multi.sh
+poetry run wandb sweep sweep-diff.yaml
+./sweep-multi.sh <sweep_id>
 ```

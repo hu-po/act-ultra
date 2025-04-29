@@ -34,8 +34,7 @@ setup dependencies
 
 ```bash
 ssh -i ~/.ssh/id_ed25519.pub ubuntu@192.222.52.183
-git clone https://github.com/hu-po/act-ultra.git
-cd act-ultra
+git clone https://github.com/hu-po/act-ultra.git && cd act-ultra
 curl -sSL https://install.python-poetry.org | python3 -
 export PATH="/home/${USER}/.local/bin:$PATH"
 poetry lock

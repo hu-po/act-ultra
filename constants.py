@@ -1,8 +1,8 @@
 import pathlib
 
 ### Task parameters
-DATA_DIR = '/home/ubuntu' # cloud H100
-# DATA_DIR = '/home/oop/act-ultra' # local 3090
+DATA_DIR = '/home/ubuntu' # cloud
+# DATA_DIR = '/home/oop/act-ultra' # local
 SIM_TASK_CONFIGS = {
     'sim_transfer_cube_scripted':{
         'dataset_dir': DATA_DIR + '/sim_transfer_cube_scripted',
@@ -19,15 +19,15 @@ SIM_TASK_CONFIGS = {
     },
 
     'sim_insertion_scripted': {
-        # # local 3090
+        # # local
         # 'dataset_dir': DATA_DIR + '/synthetic_data',
         # 'num_episodes': 10,
-        # cloud H100 - 50 episodes
-        'dataset_dir': DATA_DIR + '/sim_insertion_scripted_50',
-        'num_episodes': 50,
-        # # cloud H100 - 200 episodes
-        # 'dataset_dir': DATA_DIR + '/sim_insertion_scripted_200',
-        # 'num_episodes': 200,
+        # # cloud - 50 episodes
+        # 'dataset_dir': DATA_DIR + '/sim_insertion_scripted_50',
+        # 'num_episodes': 50,
+        # cloud - 200 episodes
+        'dataset_dir': DATA_DIR + '/sim_insertion_scripted_200',
+        'num_episodes': 200,
         'episode_len': 400,
         'camera_names': ['top']
     },

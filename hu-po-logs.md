@@ -259,6 +259,15 @@ poetry run python3 record_sim_episodes.py \
 --num_episodes 200
 ```
 
+takes quite a while, so zip and scp the dataset to local machine
+
+```bash
+# on cloud machine
+zip -r /home/ubuntu/sim_insertion_scripted_200.zip /home/ubuntu/sim_insertion_scripted_200
+# on local machine
+scp -i ~/.ssh/id_ed25519.pub ubuntu@192.222.52.183:/home/ubuntu/sim_insertion_scripted_200.zip /home/${USER}/
+```
+
 run diffusion policy sweep
 
 ```bash

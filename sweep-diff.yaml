@@ -24,3 +24,7 @@ parameters:
     values: [32, 64, 128]
   dataset_dir:
     values: ["/home/ubuntu/sim_insertion_scripted_50", "/home/ubuntu/sim_insertion_scripted_200"]
+  hidden_dim:
+    value: 512
+  dim_feedforward:
+    value: 3200

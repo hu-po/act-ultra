@@ -49,8 +49,9 @@ def main(args):
     else:
         from aloha_scripts.constants import TASK_CONFIGS
         task_config = TASK_CONFIGS[task_name]
-    dataset_dir = task_config['dataset_dir']
-    num_episodes = task_config['num_episodes']
+    dataset_dir = args['dataset_dir']
+    # Extract num_episodes from dataset directory name (e.g. sim_insertion_scripted_50 -> 50)
+    num_episodes = int(dataset_dir.split('_')[-1])
     episode_len = task_config['episode_len']
     camera_names = task_config['camera_names']
 
@@ -368,12 +369,7 @@ def eval_bc(config, ckpt_name, save_episode=True):
         f.write('\n\n')
         f.write(repr(highest_rewards))
 
-    # Log evaluation metrics
-    wandb.log({
-        "eval/success_rate": success_rate,
-        "eval/avg_return": avg_return,
-        "eval/rollouts": num_rollouts
-    })
+
 
     return success_rate, avg_return
 
@@ -479,6 +475,18 @@ def train_bc(train_dataloader, val_dataloader, config):
         artifact.add_file(ckpt_path)
         wandb.log_artifact(artifact)
 
+        # Run evaluation with best checkpoint
+        print("Running evaluation with best checkpoint...")
+        success_rate, avg_return = eval_bc(config, f'policy_epoch_{best_epoch}_seed_{seed}.ckpt', save_episode=True)
+        
+        # Log final evaluation metrics
+        wandb.log({
+            "final/success_rate": success_rate,
+            "final/avg_return": avg_return,
+            "final/best_epoch": best_epoch,
+            "final/val_loss": min_val_loss
+        })
+
     # save training curves
     plot_history(train_history, validation_history, num_epochs, ckpt_dir, seed)
 
@@ -513,6 +521,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', action='store', type=int, help='seed', required=True)
     parser.add_argument('--num_epochs', action='store', type=int, help='num_epochs', required=True)
     parser.add_argument('--lr', action='store', type=float, help='lr', required=True)
+    parser.add_argument('--dataset_dir', action='store', type=str, help='dataset directory', required=True)
 
     # for ACT
     parser.add_argument('--kl_weight', action='store', type=int, help='KL Weight', required=False)

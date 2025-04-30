@@ -5,9 +5,9 @@ metric:
   goal: minimize
 parameters:
   batch_size:
-    value: 16
+    value: 32
   num_epochs:
-    value: 2000
+    value: 2048
   ckpt_dir:
     value: /home/ubuntu/sim_insertion_checkpts
   task_name:
@@ -16,13 +16,13 @@ parameters:
     value: ACT
   seed:
     values: [0, 1, 2]
-  kl_weight:
-    values: [5, 10, 20]
   chunk_size:
     values: [50, 100, 200]
-  hidden_dim:
-    values: [256, 512, 1024]
-  dim_feedforward:
-    values: [1600, 3200, 4800]
+  kl_weight:
+    values: [5, 10, 20]
   lr:
-    values: [1e-3, 1e-4, 1e-5]
+    values: [1e-3, 5e-4, 1e-4, 5e-5, 1e-5]
+  dataset_dir:
+    values: 
+      - /home/ubuntu/sim_insertion_scripted_50
+      - /home/ubuntu/sim_insertion_scripted_200

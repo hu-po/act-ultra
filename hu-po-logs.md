@@ -274,3 +274,14 @@ run diffusion policy sweep
 poetry run wandb sweep sweep-diff.yaml
 ./sweep-multi.sh <sweep_id>
 ```
+
+# Wednesday (04/30/2025)
+
+lambdalabs 8xV100 @ $4.40 $ / hr
+
+trying big vs small dataset
+
+```bash
+poetry run wandb sweep sweep-act.yaml
+./sweep-multi.sh <sweep_id>
+```

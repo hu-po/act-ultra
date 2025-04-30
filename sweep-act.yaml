@@ -23,6 +23,4 @@ parameters:
   lr:
     values: [1e-3, 5e-4, 1e-4, 5e-5, 1e-5]
   dataset_dir:
-    values: 
-      - /home/ubuntu/sim_insertion_scripted_50
-      - /home/ubuntu/sim_insertion_scripted_200
+    values: ["/home/ubuntu/sim_insertion_scripted_50", "/home/ubuntu/sim_insertion_scripted_200"]

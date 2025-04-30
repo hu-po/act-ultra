@@ -23,6 +23,4 @@ parameters:
   num_train_timesteps:
     values: [32, 64, 128]
   dataset_dir:
-    values: 
-      - /home/ubuntu/sim_insertion_scripted_50
-      - /home/ubuntu/sim_insertion_scripted_200
+    values: ["/home/ubuntu/sim_insertion_scripted_50", "/home/ubuntu/sim_insertion_scripted_200"]

@@ -285,3 +285,28 @@ trying big vs small dataset
 poetry run wandb sweep sweep-act.yaml
 ./sweep-multi.sh <sweep_id>
 ```
+
+# Thursday (05/01/2025)
+
+test out best diffusion policy locally
+
+test out diffusion policy locally
+
+```bash
+poetry run python3 imitate_episodes.py \
+--task_name sim_insertion_scripted \
+--ckpt_dir ~/act-ultra/ckpts/best_diffusion \
+--dataset_dir ~/act-ultra/synthetic_data_200 \
+--policy_class Diffusion \
+--batch_size 8 \
+--num_epochs 100 \
+--lr 1e-5 \
+--chunk_size 100 \
+--num_train_timesteps 64 \
+--dim_feedforward 3200 \
+--hidden_dim 512 \
+--chunk_size 200 \
+--temporal_agg \
+--seed 0 \
+--eval
+```

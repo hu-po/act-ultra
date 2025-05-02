@@ -57,7 +57,7 @@ def main(args):
 
     # fixed parameters
     state_dim = task_config.get('state_dim', 14)
-    lr_backbone = 1e-5
+    lr_backbone = args.get('lr_backbone', 1e-5)  # Get from args with default
     backbone = 'resnet18'
     if policy_class == 'ACT':
         enc_layers = 4
@@ -521,6 +521,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', action='store', type=int, help='seed', required=True)
     parser.add_argument('--num_epochs', action='store', type=int, help='num_epochs', required=True)
     parser.add_argument('--lr', action='store', type=float, help='lr', required=True)
+    parser.add_argument('--lr_backbone', action='store', type=float, help='learning rate for backbone', required=True)
     parser.add_argument('--dataset_dir', action='store', type=str, help='dataset directory', required=True)
 
     # for ACT

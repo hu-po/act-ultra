@@ -22,6 +22,8 @@ parameters:
     values: [5, 10, 20]
   lr:
     values: [1e-3, 5e-4, 1e-4, 5e-5, 1e-5]
+  lr_backbone:
+    values: [1e-6, 1e-5, 5e-5, 1e-4]
   dataset_dir:
     values: ["/home/ubuntu/sim_insertion_scripted_50", "/home/ubuntu/sim_insertion_scripted_200"]
   hidden_dim:

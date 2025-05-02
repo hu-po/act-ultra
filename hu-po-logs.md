@@ -319,6 +319,10 @@ scp -i ~/.ssh/id_ed25519.pub /home/${USER}/sim_insertion_scripted_50.zip ubuntu@
 ssh -i ~/.ssh/id_ed25519.pub ubuntu@104.171.203.24
 unzip /home/ubuntu/sim_insertion_scripted_200.zip -d /home/ubuntu/
 unzip /home/ubuntu/sim_insertion_scripted_50.zip -d /home/ubuntu/
+mkdir /home/ubuntu/sim_insertion_scripted_200
+mv /home/ubuntu/home/ubuntu/sim_insertion_scripted_200/* /home/ubuntu/sim_insertion_scripted_200/
+mkdir /home/ubuntu/sim_insertion_scripted_50
+mv /home/ubuntu/home/ubuntu/sim_insertion_scripted_50/* /home/ubuntu/sim_insertion_scripted_50/
 git clone https://github.com/hu-po/act-ultra.git && cd act-ultra
 curl -sSL https://install.python-poetry.org | python3 -
 export PATH="/home/${USER}/.local/bin:$PATH"

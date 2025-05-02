@@ -310,3 +310,23 @@ poetry run python3 imitate_episodes.py \
 --seed 0 \
 --eval
 ```
+
+# Friday
+
+```bash
+ssh -i ~/.ssh/id_ed25519.pub ubuntu@104.171.203.24
+git clone https://github.com/hu-po/act-ultra.git && cd act-ultra
+curl -sSL https://install.python-poetry.org | python3 -
+export PATH="/home/${USER}/.local/bin:$PATH"
+poetry lock
+poetry install
+poetry run pip install torch --index-url https://download.pytorch.org/whl/cu121
+poetry run python3 -c "import torch; print(torch.cuda.is_available())"
+poetry run pip install diffusers
+poetry run wandb login
+sudo apt-get update
+sudo apt-get install -y xvfb libgl1-mesa-glx libosmesa6 libglfw3
+Xvfb :1 -screen 0 1280x1024x24 & export DISPLAY=:1
+poetry run wandb sweep sweep-act.yaml
+./sweep-multi.sh <sweep_id>
+```

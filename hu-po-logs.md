@@ -314,7 +314,11 @@ poetry run python3 imitate_episodes.py \
 # Friday
 
 ```bash
+scp -i ~/.ssh/id_ed25519.pub /home/${USER}/sim_insertion_scripted_200.zip ubuntu@104.171.203.24:/home/ubuntu/sim_insertion_scripted_200.zip
+scp -i ~/.ssh/id_ed25519.pub /home/${USER}/sim_insertion_scripted_50.zip ubuntu@104.171.203.24:/home/ubuntu/sim_insertion_scripted_50.zip
 ssh -i ~/.ssh/id_ed25519.pub ubuntu@104.171.203.24
+unzip /home/ubuntu/sim_insertion_scripted_200.zip -d /home/ubuntu/
+unzip /home/ubuntu/sim_insertion_scripted_50.zip -d /home/ubuntu/
 git clone https://github.com/hu-po/act-ultra.git && cd act-ultra
 curl -sSL https://install.python-poetry.org | python3 -
 export PATH="/home/${USER}/.local/bin:$PATH"
